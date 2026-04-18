@@ -1,0 +1,113 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ShortLinkProvider {
+  INTERNAL
+  KUTT
+  YOURLS
+}
+
+enum ClickEventType {
+  PAGE_VIEW
+  OPEN_PROXY
+  OPEN_TARGET
+  COPY_PROXY
+}
+
+model AdminSession {
+  id          String   @id @default(cuid())
+  telegramId  BigInt
+  username    String?
+  displayName String
+  photoUrl    String?
+  expiresAt   DateTime
+  lastSeenAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([telegramId])
+  @@index([expiresAt])
+}
+
+model ProxyConfig {
+  id           String        @id @default(cuid())
+  label        String
+  server       String
+  port         Int
+  secret       String
+  notes        String?
+  isActive     Boolean       @default(true)
+  landingPages LandingPage[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([isActive])
+}
+
+model ShortLinkProviderConfig {
+  id               String            @id @default(cuid())
+  label            String
+  provider         ShortLinkProvider
+  apiUrl           String?
+  apiKey           String?
+  domain           String?
+  isActive         Boolean           @default(false)
+  landingPages     LandingPage[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([isActive])
+}
+
+model LandingPage {
+  id                String                    @id @default(cuid())
+  slug              String                    @unique
+  title             String
+  description       String?
+  avatarUrl         String?
+  warningTitle      String?
+  warningText       String?
+  proxyButtonText   String                    @default("Ускорить Telegram")
+  targetButtonText  String                    @default("Открыть в Telegram")
+  targetUrl         String
+  externalShortUrl  String?
+  isActive          Boolean                   @default(true)
+  proxyConfigId     String
+  providerConfigId  String?
+  proxyConfig       ProxyConfig               @relation(fields: [proxyConfigId], references: [id], onDelete: Cascade)
+  providerConfig    ShortLinkProviderConfig?  @relation(fields: [providerConfigId], references: [id], onDelete: SetNull)
+  clickEvents       ClickEvent[]
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+
+  @@index([isActive])
+  @@index([proxyConfigId])
+  @@index([providerConfigId])
+}
+
+model ClickEvent {
+  id            String         @id @default(cuid())
+  eventType     ClickEventType
+  slug          String?
+  userAgent     String?
+  referrer      String?
+  ipHash        String?
+  landingPageId String?
+  landingPage   LandingPage?   @relation(fields: [landingPageId], references: [id], onDelete: SetNull)
+  createdAt     DateTime       @default(now())
+
+  @@index([eventType])
+  @@index([slug])
+  @@index([landingPageId])
+  @@index([createdAt])
+}
