@@ -82,8 +82,7 @@ export function LandingActions({
           Подключите прокси
         </h2>
         <p className="mt-2 text-sm text-slate-500">
-          Сначала пробуем открыть приложение через `tg://`, потом автоматически
-          даём HTTPS fallback на `t.me/proxy`.
+          Нажмите кнопку ниже, чтобы быстро подключить прокси для Telegram.
         </p>
 
         <button
