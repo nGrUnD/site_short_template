@@ -102,7 +102,6 @@ export default async function LandingPage({ params }: LandingPageProps) {
           slug={landingPage.slug}
           tgProxyUrl={proxyUrls.tg}
           fallbackProxyUrl={proxyUrls.https}
-          rawProxyUrl={proxyUrls.raw}
           targetUrl={landingPage.targetUrl}
           proxyButtonText={landingPage.proxyButtonText}
           targetButtonText={landingPage.targetButtonText}
