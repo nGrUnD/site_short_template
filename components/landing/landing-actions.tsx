@@ -13,6 +13,55 @@ type LandingActionsProps = {
 
 type EventType = "PAGE_VIEW" | "OPEN_PROXY" | "OPEN_TARGET" | "COPY_PROXY";
 
+function buildTelegramTargetUrls(targetUrl: string) {
+  if (targetUrl.startsWith("tg://")) {
+    return {
+      appUrl: targetUrl,
+      webUrl: targetUrl,
+    };
+  }
+
+  try {
+    const parsed = new URL(targetUrl);
+    const hostname = parsed.hostname.replace(/^www\./i, "").toLowerCase();
+
+    if (hostname === "t.me" || hostname === "telegram.me") {
+      const pathSegments = parsed.pathname.split("/").filter(Boolean);
+
+      if (pathSegments.length === 1) {
+        if (pathSegments[0].startsWith("+")) {
+          return {
+            appUrl: `tg://join?invite=${pathSegments[0].slice(1)}`,
+            webUrl: targetUrl,
+          };
+        }
+
+        return {
+          appUrl: `tg://resolve?domain=${pathSegments[0]}`,
+          webUrl: targetUrl,
+        };
+      }
+
+      if (pathSegments.length === 2 && pathSegments[0] === "joinchat") {
+        return {
+          appUrl: `tg://join?invite=${pathSegments[1]}`,
+          webUrl: targetUrl,
+        };
+      }
+    }
+  } catch {
+    return {
+      appUrl: targetUrl,
+      webUrl: targetUrl,
+    };
+  }
+
+  return {
+    appUrl: targetUrl,
+    webUrl: targetUrl,
+  };
+}
+
 async function trackEvent(slug: string, eventType: EventType) {
   const payload = JSON.stringify({ slug, eventType });
 
@@ -40,6 +89,7 @@ export function LandingActions({
   targetButtonText,
 }: LandingActionsProps) {
   const hasTarget = useMemo(() => Boolean(targetUrl), [targetUrl]);
+  const targetUrls = useMemo(() => buildTelegramTargetUrls(targetUrl), [targetUrl]);
 
   useEffect(() => {
     void trackEvent(slug, "PAGE_VIEW");
@@ -55,7 +105,10 @@ export function LandingActions({
 
   function handleOpenTarget() {
     void trackEvent(slug, "OPEN_TARGET");
-    window.location.href = targetUrl;
+    window.location.href = targetUrls.appUrl;
+    window.setTimeout(() => {
+      window.location.href = targetUrls.webUrl;
+    }, 900);
   }
 
   return (
